@@ -1,94 +1,68 @@
+
 package com.example.shaddai_app.ui.login
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.shaddai_app.domain.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
- * ViewModel para la pantalla de Login
+ * ViewModel para la pantalla de Login.
  *
- * Gestiona el estado y la lógica de negocio del login.
- * Preparado para conectar con repositorio/base de datos en el futuro.
+ * Se encarga de la lógica de negocio, la gestión del estado y la comunicación
+ * con la capa de datos (AuthRepository).
  */
-class LoginViewModel : ViewModel() {
+class LoginViewModel(private val authRepository: AuthRepository = AuthRepository()) : ViewModel() {
 
+    // Flujo de estado privado y mutable que contiene el estado actual de la UI.
     private val _uiState = MutableStateFlow(LoginState())
+    // Flujo de estado público e inmutable, expuesto a la UI.
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
 
     /**
-     * Actualiza el email/usuario
+     * Función central para manejar todos los eventos de la UI.
      */
-    fun onEmailChange(email: String) {
-        _uiState.update { it.copy(email = email, errorMessage = null) }
-    }
-
-    /**
-     * Actualiza la contraseña
-     */
-    fun onPasswordChange(password: String) {
-        _uiState.update { it.copy(password = password, errorMessage = null) }
-    }
-
-    /**
-     * Alterna la visibilidad de la contraseña
-     */
-    fun togglePasswordVisibility() {
-        _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
-    }
-
-    /**
-     * Maneja el evento de click en el botón de login
-     *
-     * TODO: Implementar validación y autenticación
-     * TODO: Conectar con repositorio/database
-     */
-    fun onLoginClick() {
-        val currentState = _uiState.value
-
-        // Validación básica
-        if (currentState.email.isBlank() || currentState.password.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Por favor completa todos los campos") }
-            return
+    fun onEvent(event: LoginEvent) {
+        when (event) {
+            is LoginEvent.OnEmailChange -> _uiState.update { it.copy(email = event.email) }
+            is LoginEvent.OnPasswordChange -> _uiState.update { it.copy(password = event.password) }
+            LoginEvent.TogglePasswordVisibility -> _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+            LoginEvent.LoginClicked -> login()
+            LoginEvent.RegisterClicked -> {
+                // Lógica para navegar a la pantalla de registro
+            }
+            is LoginEvent.SocialLogin -> {
+                // Lógica para el inicio de sesión con redes sociales
+            }
         }
-
-        // TODO: Aquí iría la lógica de autenticación
-        // _uiState.update { it.copy(isLoading = true) }
-        // viewModelScope.launch {
-        //     try {
-        //         val result = authRepository.login(currentState.email, currentState.password)
-        //         // Navegar a la siguiente pantalla
-        //     } catch (e: Exception) {
-        //         _uiState.update { it.copy(errorMessage = e.message, isLoading = false) }
-        //     }
-        // }
-
-        println("Login attempt - Email: ${currentState.email}")
     }
 
     /**
-     * Maneja el evento de registro
-     *
-     * TODO: Navegar a pantalla de registro
+     * Realiza el proceso de inicio de sesión.
      */
-    fun onRegisterClick() {
-        println("Navigate to register screen")
-        // TODO: Implementar navegación
-    }
+    private fun login() {
+        viewModelScope.launch {
+            // Muestra el indicador de carga
+            _uiState.update { it.copy(isLoading = true) }
 
-    /**
-     * Maneja el login con proveedores externos (Google, Facebook, etc.)
-     *
-     * TODO: Implementar OAuth
-     */
-    fun onSocialLogin(provider: SocialLoginProvider) {
-        println("Social login with: $provider")
-        // TODO: Implementar autenticación social
-    }
-}
+            // Llama al repositorio para autenticar al usuario.
+            val result = authRepository.login(_uiState.value.email, _uiState.value.password)
 
-enum class SocialLoginProvider {
-    GOOGLE,
-    FACEBOOK
+            // Procesa el resultado de la llamada al repositorio.
+            result.fold(
+                onSuccess = {
+                    // En caso de éxito, actualiza el estado para indicar que el login fue correcto.
+                    _uiState.update { it.copy(isLoading = false, loginSuccess = true) }
+                },
+                onFailure = {
+                    // En caso de fallo, muestra un mensaje de error (actualmente es un placeholder).
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Credenciales inválidas") }
+                }
+            )
+        }
+    }
 }
