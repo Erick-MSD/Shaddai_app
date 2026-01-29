@@ -14,13 +14,13 @@ import shaddai_app.composeapp.generated.resources.*
  */
 @Composable
 fun getManropeFontFamily() = FontFamily(
-    Font(Res.font.manropeextralight, FontWeight.ExtraLight),
-    Font(Res.font.manropelight, FontWeight.Light),
-    Font(Res.font.manroperegular, FontWeight.Normal),
-    Font(Res.font.manropemedium, FontWeight.Medium),
-    Font(Res.font.manropesemibold, FontWeight.SemiBold),
+    Font(Res.font.manropeextrabold, FontWeight.ExtraBold),
     Font(Res.font.manropebold, FontWeight.Bold),
-    Font(Res.font.manropeextrabold, FontWeight.ExtraBold)
+    Font(Res.font.manropesemibold, FontWeight.SemiBold),
+    Font(Res.font.manropemedium, FontWeight.Medium),
+    Font(Res.font.manroperegular, FontWeight.Normal),
+    Font(Res.font.manropelight, FontWeight.Light),
+    Font(Res.font.manropeextralight, FontWeight.ExtraLight)
 )
 
 /**
