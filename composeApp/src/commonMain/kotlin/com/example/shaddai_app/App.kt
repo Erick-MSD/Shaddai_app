@@ -1,11 +1,10 @@
-
 package com.example.shaddai_app
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.shaddai_app.ui.home.HomeScreen
 import com.example.shaddai_app.ui.login.LoginScreen
 import com.example.shaddai_app.ui.login.LoginViewModel
+import com.example.shaddai_app.ui.main.TechnicianAppScaffold
 import com.example.shaddai_app.ui.theme.ShaddaiTheme
 
 /**
@@ -22,8 +21,8 @@ fun App() {
 
         // Navegación manual basada en el estado `isLoggedIn`.
         if (isLoggedIn) {
-            // Si el usuario está logueado, muestra la pantalla principal.
-            HomeScreen()
+            // Si el usuario está logueado, muestra la pantalla principal del técnico.
+            TechnicianAppScaffold()
         } else {
             // Si no, muestra la pantalla de login.
             LoginScreen(
