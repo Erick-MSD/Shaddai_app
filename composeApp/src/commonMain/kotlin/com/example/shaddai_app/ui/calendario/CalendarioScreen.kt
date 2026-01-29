@@ -8,11 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Headset
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,131 +22,68 @@ import com.example.shaddai_app.data.model.EventoComida
 import com.example.shaddai_app.data.model.EventoServicio
 import com.example.shaddai_app.data.model.TipoServicio
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.Month
+import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 
 /**
- * Pantalla principal del calendario para técnicos
+ * Pantalla principal del calendario para técnicos.
+ * Esta pantalla ahora solo se encarga de mostrar el contenido, no el Scaffold.
  */
 @Composable
-fun CalendarioScreen(
-    viewModel: CalendarioViewModel,
-    onNavigateHome: () -> Unit = {},
-    onNavigateHerramientas: () -> Unit = {},
-    onNavigateSoporte: () -> Unit = {}
-) {
+fun CalendarioScreen(viewModel: CalendarioViewModel) {
     val uiState by viewModel.uiState.collectAsState()
 
-    CalendarioContent(
-        state = uiState,
-        onEvent = viewModel::onEvent,
-        onNavigateHome = onNavigateHome,
-        onNavigateHerramientas = onNavigateHerramientas,
-        onNavigateSoporte = onNavigateSoporte
-    )
-}
-
-@Composable
-private fun CalendarioContent(
-    state: CalendarioState,
-    onEvent: (CalendarioEvent) -> Unit,
-    onNavigateHome: () -> Unit,
-    onNavigateHerramientas: () -> Unit,
-    onNavigateSoporte: () -> Unit
-) {
-    Scaffold(
-        topBar = {
-            CalendarioTopBar(
-                nombreTecnico = state.tecnicoActual?.nombre ?: "Técnico"
-            )
-        },
-        bottomBar = {
-            BottomNavigationBar(
-                selectedIndex = 2,
-                onNavigateHome = onNavigateHome,
-                onNavigateHerramientas = onNavigateHerramientas,
-                onNavigateCalendario = { },
-                onNavigateSoporte = onNavigateSoporte
-            )
-        },
-        containerColor = Color(0xFFF0F9FF)
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            MesSelectorRow(
-                fechaSeleccionada = state.fechaSeleccionada,
-                onRetroceder = { onEvent(CalendarioEvent.RetrocederDia) },
-                onAvanzar = { onEvent(CalendarioEvent.AvanzarDia) }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            SemanaSelectorRow(
-                fechaSeleccionada = state.fechaSeleccionada,
-                onDiaSeleccionado = { fecha ->
-                    onEvent(CalendarioEvent.CambiarFecha(fecha))
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (state.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                EventosDelDia(
-                    eventos = state.eventos,
-                    onEventoClick = { evento ->
-                        onEvent(CalendarioEvent.SeleccionarEvento(evento))
-                    }
-                )
-            }
-
-            state.error?.let { error ->
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CalendarioTopBar(nombreTecnico: String) {
-    Surface(
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(80.dp),
-        color = Color(0xFF1565C0),
-        shadowElevation = 4.dp
+            .fillMaxSize()
+            .padding(top = 16.dp) // Añadimos un padding superior para que no se pegue a la TopBar
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
+        MesSelectorRow(
+            fechaSeleccionada = uiState.fechaSeleccionada,
+            onRetroceder = { viewModel.onEvent(CalendarioEvent.RetrocederDia) },
+            onAvanzar = { viewModel.onEvent(CalendarioEvent.AvanzarDia) }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SemanaSelectorRow(
+            fechaSeleccionada = uiState.fechaSeleccionada,
+            onDiaSeleccionado = { fecha ->
+                viewModel.onEvent(CalendarioEvent.CambiarFecha(fecha))
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            EventosDelDia(
+                eventos = uiState.eventos,
+                onEventoClick = { evento ->
+                    viewModel.onEvent(CalendarioEvent.SeleccionarEvento(evento))
+                }
+            )
+        }
+
+        uiState.error?.let { errorMsg ->
             Text(
-                text = "Hola, $nombreTecnico",
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
+                text = errorMsg,
+                color = Color.Red, // Corregido: Se usa un color explícito para evitar ambigüedad
+                modifier = Modifier.padding(16.dp)
             )
         }
     }
 }
+
+// --- Se han eliminado los componentes CalendarioContent, CalendarioTopBar y BottomNavigationBar ---
+// --- ya que la UI global se gestiona desde MainScreen.kt ---
 
 @Composable
 private fun MesSelectorRow(
@@ -333,30 +265,21 @@ private fun EventoCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = evento.tipoServicio.displayName,
                         fontSize = 12.sp,
                         color = Color(evento.tipoServicio.colorHex),
                         fontWeight = FontWeight.Medium
                     )
-
                     Spacer(modifier = Modifier.width(8.dp))
-
                     IconoTipoServicio(tipo = evento.tipoServicio)
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "📍 ",
-                        fontSize = 12.sp
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "📍 ", fontSize = 12.sp)
                     Text(
                         text = evento.ubicacionDireccion,
                         fontSize = 12.sp,
@@ -368,13 +291,8 @@ private fun EventoCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "⏱️ ",
-                        fontSize = 12.sp
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "⏱️ ", fontSize = 12.sp)
                     Text(
                         text = evento.obtenerDuracionFormateada(),
                         fontSize = 12.sp,
@@ -391,22 +309,15 @@ private fun HoraComidaCard(eventoComida: EventoComida) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "☕",
-                fontSize = 24.sp
-            )
+            Text(text = "☕", fontSize = 24.sp)
             Spacer(modifier = Modifier.width(12.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -442,86 +353,7 @@ private fun IconoTipoServicio(tipo: TipoServicio) {
         TipoServicio.TI_SOPORTE -> "💻"
         else -> "🔧"
     }
-
     Text(text = icono, fontSize = 16.sp)
-}
-
-/**
- * Bottom Navigation usando los MISMOS iconos de Material Design que GlobalBottomBar
- */
-@Composable
-private fun BottomNavigationBar(
-    selectedIndex: Int,
-    onNavigateHome: () -> Unit,
-    onNavigateHerramientas: () -> Unit,
-    onNavigateCalendario: () -> Unit,
-    onNavigateSoporte: () -> Unit
-) {
-    NavigationBar(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(70.dp),
-        containerColor = Color(0xFFD7F4F5),
-    ) {
-        val activeColor = Color(0xFF0E88E6)
-        val inactiveColor = Color(0xFFA9A9A9)
-
-        NavigationBarItem(
-            selected = selectedIndex == 0,
-            onClick = onNavigateHome,
-            icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
-            label = { Text("Inicio") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = activeColor,
-                unselectedIconColor = inactiveColor,
-                selectedTextColor = activeColor,
-                unselectedTextColor = inactiveColor,
-                indicatorColor = Color.Transparent
-            )
-        )
-
-        NavigationBarItem(
-            selected = selectedIndex == 1,
-            onClick = onNavigateHerramientas,
-            icon = { Icon(Icons.Default.Build, contentDescription = "Servicios") },
-            label = { Text("Servicios") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = activeColor,
-                unselectedIconColor = inactiveColor,
-                selectedTextColor = activeColor,
-                unselectedTextColor = inactiveColor,
-                indicatorColor = Color.Transparent
-            )
-        )
-
-        NavigationBarItem(
-            selected = selectedIndex == 2,
-            onClick = onNavigateCalendario,
-            icon = { Icon(Icons.Default.CalendarToday, contentDescription = "Calendario") },
-            label = { Text("Calendario") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = activeColor,
-                unselectedIconColor = inactiveColor,
-                selectedTextColor = activeColor,
-                unselectedTextColor = inactiveColor,
-                indicatorColor = Color.Transparent
-            )
-        )
-
-        NavigationBarItem(
-            selected = selectedIndex == 3,
-            onClick = onNavigateSoporte,
-            icon = { Icon(Icons.Default.Headset, contentDescription = "Soporte") },
-            label = { Text("Soporte") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = activeColor,
-                unselectedIconColor = inactiveColor,
-                selectedTextColor = activeColor,
-                unselectedTextColor = inactiveColor,
-                indicatorColor = Color.Transparent
-            )
-        )
-    }
 }
 
 private fun obtenerNombreMes(month: Month): String {
@@ -542,21 +374,18 @@ private fun obtenerNombreMes(month: Month): String {
 }
 
 private fun obtenerNombreDiaSemana(fecha: LocalDate): String {
-    val diaSemana = fecha.dayOfWeek.ordinal + 1
-    return when (diaSemana) {
-        1 -> "LUN"
-        2 -> "MAR"
-        3 -> "MIE"
-        4 -> "JUE"
-        5 -> "VIE"
-        6 -> "SAB"
-        7 -> "DOM"
-        else -> ""
+    return when (fecha.dayOfWeek) {
+        DayOfWeek.MONDAY -> "LUN"
+        DayOfWeek.TUESDAY -> "MAR"
+        DayOfWeek.WEDNESDAY -> "MIE"
+        DayOfWeek.THURSDAY -> "JUE"
+        DayOfWeek.FRIDAY -> "VIE"
+        DayOfWeek.SATURDAY -> "SAB"
+        DayOfWeek.SUNDAY -> "DOM"
     }
 }
 
 private fun obtenerInicioSemana(fecha: LocalDate): LocalDate {
-    val diaSemana = fecha.dayOfWeek.ordinal + 1
-    val diasHastaLunes = diaSemana - 1
-    return fecha.plus(DateTimeUnit.DAY * -diasHastaLunes)
+    val diasARestar = fecha.dayOfWeek.ordinal
+    return fecha.minus(diasARestar, DateTimeUnit.DAY)
 }
