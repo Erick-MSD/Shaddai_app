@@ -95,7 +95,7 @@ data class EventoServicio(
     fun perteneceATecnico(tecId: String): Boolean = tecnicoId == tecId
 
     private fun formatearHora(hora: LocalTime): String {
-        return String.format("%02d:%02d", hora.hour, hora.minute)
+        return "${hora.hour.toString().padStart(2, '0')}:${hora.minute.toString().padStart(2, '0')}"
     }
 }
 
@@ -111,6 +111,6 @@ data class EventoComida(
     }
 
     private fun formatearHora(hora: LocalTime): String {
-        return String.format("%02d:%02d", hora.hour, hora.minute)
+        return "${hora.hour.toString().padStart(2, '0')}:${hora.minute.toString().padStart(2, '0')}"
     }
 }
