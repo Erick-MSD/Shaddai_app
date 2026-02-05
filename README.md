@@ -16,7 +16,7 @@ La aplicación permite a los técnicos:
 
 Para la documentación técnica completa del proyecto, consulta:
 
-### 👉 [**DOCUMENTACION_PROYECTO.md**](./DOCUMENTACION_PROYECTO.md)
+### 👉 [**DOCUMENTACION_PROYECTO.md**](./DOCUMENTACION_COMPLETA.md)
 
 Este documento incluye:
 - 🔍 Problemática y Justificación
