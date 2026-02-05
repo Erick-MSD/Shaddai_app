@@ -6,60 +6,65 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import org.jetbrains.compose.resources.Font
+import shaddai_app.composeapp.generated.resources.*
 
 /**
- * Tipografía de la aplicación usando Manrope
- *
- * Nota: Para usar Manrope de Google Fonts en KMP:
- * 1. Descarga los archivos .ttf de https://fonts.google.com/specimen/Manrope
- * 2. Colócalos en: composeApp/src/commonMain/composeResources/font/
- * 3. Nombres sugeridos: manrope_regular.ttf, manrope_medium.ttf, manrope_semibold.ttf, manrope_bold.ttf
- *
- * Por ahora se usa la fuente del sistema como fallback.
+ * Carga la familia de fuentes Manrope con todos sus pesos disponibles.
  */
-
-// Placeholder: En producción, cargar desde resources
-// @Composable
-// fun getManropeFontFamily(): FontFamily {
-//     return FontFamily(
-//         Font(Res.font.manrope_regular, FontWeight.Normal),
-//         Font(Res.font.manrope_medium, FontWeight.Medium),
-//         Font(Res.font.manrope_semibold, FontWeight.SemiBold),
-//         Font(Res.font.manrope_bold, FontWeight.Bold)
-//     )
-// }
-
-val ShaddaiTypography = Typography(
-    // Título grande para "Bienvenido"
-    headlineLarge = TextStyle(
-        fontFamily = FontFamily.Default, // Cambiar a Manrope cuando esté disponible
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
-        letterSpacing = 0.sp
-    ),
-    // Botones
-    labelLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    ),
-    // Campos de texto
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    ),
-    // Texto secundario
-    bodyMedium = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.25.sp
-    )
+@Composable
+fun getManropeFontFamily() = FontFamily(
+    Font(Res.font.manropeextrabold, FontWeight.ExtraBold),
+    Font(Res.font.manropebold, FontWeight.Bold),
+    Font(Res.font.manropesemibold, FontWeight.SemiBold),
+    Font(Res.font.manropemedium, FontWeight.Medium),
+    Font(Res.font.manroperegular, FontWeight.Normal),
+    Font(Res.font.manropelight, FontWeight.Light),
+    Font(Res.font.manropeextralight, FontWeight.ExtraLight)
 )
+
+/**
+ * Genera la configuración de tipografía completa asegurando que Manrope sea la fuente base.
+ */
+@Composable
+fun getTypography(): Typography {
+    val manrope = getManropeFontFamily()
+    
+    // Definimos un estilo base para no repetir fontFamily en cada uno
+    val baseStyle = TextStyle(fontFamily = manrope)
+
+    return Typography(
+        headlineLarge = baseStyle.copy(
+            fontWeight = FontWeight.Bold,
+            fontSize = 32.sp,
+            lineHeight = 40.sp
+        ),
+        headlineMedium = baseStyle.copy(
+            fontWeight = FontWeight.Bold,
+            fontSize = 28.sp,
+            lineHeight = 36.sp
+        ),
+        titleLarge = baseStyle.copy(
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 22.sp,
+            lineHeight = 28.sp
+        ),
+        bodyLarge = baseStyle.copy(
+            fontWeight = FontWeight.Normal,
+            fontSize = 16.sp,
+            lineHeight = 24.sp,
+            letterSpacing = 0.5.sp
+        ),
+        bodyMedium = baseStyle.copy(
+            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+            letterSpacing = 0.25.sp
+        ),
+        labelLarge = baseStyle.copy(
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            lineHeight = 20.sp
+        )
+    )
+}

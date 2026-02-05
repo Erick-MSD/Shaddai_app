@@ -8,8 +8,6 @@ import androidx.compose.runtime.Composable
 fun ShaddaiTheme(
     content: @Composable () -> Unit
 ) {
-    // Se movió la definición del esquema de colores dentro de la función ShaddaiTheme
-    // para evitar errores de NoClassDefFoundError durante la inicialización estática en el Preview.
     val colorScheme = lightColorScheme(
         primary = ShaddaiColors.AccentBlue,
         onPrimary = ShaddaiColors.White,
@@ -25,7 +23,7 @@ fun ShaddaiTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = ShaddaiTypography,
+        typography = getTypography(), // Usamos la función que carga Manrope
         content = content
     )
 }
