@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.googleServices)
 }
 
 kotlin {
@@ -27,7 +28,7 @@ kotlin {
     }
     
     jvm()
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)

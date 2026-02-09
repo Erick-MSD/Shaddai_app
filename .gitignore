@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 *.iml
 .kotlin
 .gradle
@@ -18,7 +17,7 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
-=======
+
 # Compiled class file
 *.class
 
@@ -40,10 +39,9 @@ node_modules/
 *.tar.gz
 *.rar
 
+# Firebase
+composeApp/google-services.json
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
-
-# Kotlin Gradle plugin data, see https://kotlinlang.org/docs/whatsnew20.html#new-directory-for-kotlin-data-in-gradle-projects
-.kotlin/
->>>>>>> 75cb98803582e5c56f4f887e7ea7960382edac2f
