@@ -1,5 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -8,6 +9,25 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.googleServices)
+    alias(libs.plugins.realm.kotlin)
+    alias(libs.plugins.buildkonfig)
+}
+
+// Cargar local.properties de forma segura
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+
+buildkonfig {
+    packageName = "com.example.shaddai_app"
+    objectName = "AppConfig"
+    exposeObjectWithName = "AppConfig"
+    
+    defaultConfigs {
+        buildConfigField("MONGODB_APP_ID", localProperties.getProperty("mongodb.app.id") ?: "")
+    }
 }
 
 kotlin {
@@ -30,30 +50,19 @@ kotlin {
     jvm()
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
-            // Ensure uiTooling is available for the Preview renderer
-            implementation(compose.uiTooling)
-        }
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
-            implementation(compose.material)
-            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.preview)
-            implementation(libs.androidx.lifecycle.viewmodelCompose)
-            implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.kotlinx.datetime)
+            
+            // Realm / MongoDB SDK
+            implementation(libs.realm.library.base)
+            implementation(libs.realm.library.sync)
         }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
-        jvmMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutinesSwing)
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
         }
     }
 }
@@ -66,33 +75,5 @@ android {
         applicationId = "com.example.shaddai_app"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
-
-compose.desktop {
-    application {
-        mainClass = "com.example.shaddai_app.MainKt"
-
-        nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "com.example.shaddai_app"
-            packageVersion = "1.0.0"
-        }
     }
 }
