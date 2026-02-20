@@ -1,9 +1,7 @@
-
 package com.example.shaddai_app.ui.login
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,11 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -31,20 +25,21 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.shaddai_app.ui.theme.ShaddaiColors
-import org.jetbrains.compose.resources.painterResource
-import shaddai_app.composeapp.generated.resources.*
+import com.example.shaddai_app.data.model.User
 
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (User) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    if (uiState.loginSuccess) {
-        onLoginSuccess()
+    // Si ya tenemos un usuario autenticado, notificamos al root.
+    uiState.loggedInUser?.let { user ->
+        LaunchedEffect(user.id) {
+            onLoginSuccess(user)
+        }
     }
 
     LoginContent(
@@ -65,7 +60,7 @@ private fun LoginContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF0F9FF)) // Color de fondo celeste muy claro de la imagen
+            .background(Color(0xFFF0F9FF))
             .systemBarsPadding()
     ) {
         Column(
@@ -97,7 +92,9 @@ private fun LoginContent(
                 onValueChange = { onEvent(LoginEvent.OnEmailChange(it)) },
                 placeholder = "Usuario o Correo",
                 keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
+                imeAction = ImeAction.Next,
+                isError = state.emailError != null,
+                supportingText = state.emailError
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -109,7 +106,9 @@ private fun LoginContent(
                     placeholder = "Contraseña",
                     isPasswordVisible = state.isPasswordVisible,
                     onTogglePasswordVisibility = { onEvent(LoginEvent.TogglePasswordVisibility) },
-                    onImeAction = { onEvent(LoginEvent.LoginClicked) }
+                    onImeAction = { onEvent(LoginEvent.LoginClicked) },
+                    isError = state.passwordError != null,
+                    supportingText = state.passwordError
                 )
                 Text(
                     text = "Olvide mi contraseña",
@@ -124,22 +123,33 @@ private fun LoginContent(
             // Botón Inicia Sesión
             Button(
                 onClick = { onEvent(LoginEvent.LoginClicked) },
+                enabled = !state.isLoading,
                 modifier = Modifier
                     .width(200.dp)
                     .height(45.dp)
                     .border(1.dp, Color.Black, RoundedCornerShape(22.dp)),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF1E88E5),
-                    contentColor = Color.Black
+                    contentColor = Color.Black,
+                    disabledContainerColor = Color(0xFF1E88E5).copy(alpha = 0.6f),
+                    disabledContentColor = Color.Black
                 ),
                 shape = RoundedCornerShape(22.dp),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
-                Text(
-                    text = "Inicia Sesión",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
+                if (state.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.Black
+                    )
+                } else {
+                    Text(
+                        text = "Inicia Sesión",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(25.dp))
@@ -157,7 +167,7 @@ private fun LoginContent(
                     },
                     onClick = { /* Facebook Login */ }
                 )
-                
+
                 Spacer(modifier = Modifier.width(20.dp))
 
                 SocialCircleButton(
@@ -180,15 +190,17 @@ private fun LoginContent(
                 modifier = Modifier.clickable { onNavigateToRegister() }
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            AnimatedVisibility(visible = state.errorMessage != null) {
+            AnimatedVisibility(visible = state.authErrorMessage != null) {
                 Text(
-                    text = state.errorMessage ?: "",
+                    text = state.authErrorMessage ?: "",
                     color = MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.Center
                 )
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
@@ -209,7 +221,7 @@ private fun LogoSection() {
                 .fillMaxSize()
                 .border(1.dp, Color.LightGray)
         )
-        
+
         // Rayo central (Simulado con Icono o Vector)
         Text(
             text = "⚡",
@@ -225,22 +237,26 @@ private fun LoginTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     keyboardType: KeyboardType = KeyboardType.Text,
-    imeAction: ImeAction = ImeAction.Done
+    imeAction: ImeAction = ImeAction.Done,
+    isError: Boolean = false,
+    supportingText: String? = null
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = {
-            Text(text = placeholder, color = Color.Gray, fontSize = 18.sp)
-        },
+        placeholder = { Text(text = placeholder, color = Color.Gray, fontSize = 18.sp) },
         modifier = Modifier
             .fillMaxWidth()
             .height(54.dp),
+        isError = isError,
+        supportingText = if (supportingText != null) {
+            { Text(text = supportingText, color = MaterialTheme.colorScheme.error) }
+        } else null,
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
-            focusedBorderColor = Color.Black,
-            unfocusedBorderColor = Color.Black,
+            focusedBorderColor = if (isError) MaterialTheme.colorScheme.error else Color.Black,
+            unfocusedBorderColor = if (isError) MaterialTheme.colorScheme.error else Color.Black,
             focusedTextColor = Color.Black,
             unfocusedTextColor = Color.Black
         ),
@@ -257,22 +273,26 @@ private fun PasswordTextField(
     placeholder: String,
     isPasswordVisible: Boolean,
     onTogglePasswordVisibility: () -> Unit,
-    onImeAction: () -> Unit
+    onImeAction: () -> Unit,
+    isError: Boolean = false,
+    supportingText: String? = null
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = {
-            Text(text = placeholder, color = Color.Gray, fontSize = 18.sp)
-        },
+        placeholder = { Text(text = placeholder, color = Color.Gray, fontSize = 18.sp) },
         modifier = Modifier
             .fillMaxWidth()
             .height(54.dp),
+        isError = isError,
+        supportingText = if (supportingText != null) {
+            { Text(text = supportingText, color = MaterialTheme.colorScheme.error) }
+        } else null,
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
-            focusedBorderColor = Color.Black,
-            unfocusedBorderColor = Color.Black,
+            focusedBorderColor = if (isError) MaterialTheme.colorScheme.error else Color.Black,
+            unfocusedBorderColor = if (isError) MaterialTheme.colorScheme.error else Color.Black,
             focusedTextColor = Color.Black,
             unfocusedTextColor = Color.Black
         ),

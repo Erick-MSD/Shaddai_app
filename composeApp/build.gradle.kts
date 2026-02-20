@@ -10,7 +10,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.googleServices)
-    alias(libs.plugins.realm.kotlin)
+    // alias(libs.plugins.realm.kotlin) // Deshabilitado temporalmente (incompatibilidad con K2/Kotlin 2.3.0)
     alias(libs.plugins.buildkonfig)
 }
 
@@ -56,11 +56,13 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            implementation(compose.materialIconsExtended)
+            implementation(compose.components.resources)
             implementation(libs.kotlinx.datetime)
-            
-            // Realm / MongoDB SDK
-            implementation(libs.realm.library.base)
-            implementation(libs.realm.library.sync)
+
+            // Realm / MongoDB SDK (deshabilitado temporalmente junto con el plugin)
+            // implementation(libs.realm.library.base)
+            // implementation(libs.realm.library.sync)
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)

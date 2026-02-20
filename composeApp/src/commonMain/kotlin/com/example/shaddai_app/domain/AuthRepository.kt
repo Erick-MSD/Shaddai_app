@@ -1,35 +1,60 @@
-
 package com.example.shaddai_app.domain
 
+import com.example.shaddai_app.data.model.User
+import com.example.shaddai_app.data.model.UserRole
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 /**
- * Repositorio para gestionar la autenticación.
+ * Repositorio de autenticación.
  *
- * Esta es una implementación simulada (fake) que no realiza una autenticación real.
- * Su propósito es desacoplar la lógica de negocio de la UI y prepararla para una
- * futura integración con un backend real (API, base de datos, etc.).
+ * IMPORTANTE: Implementación temporal sin Realm/MongoDB (porque el plugin Realm no compila con Kotlin 2.3.0/K2 en este proyecto).
+ *
+ * Cuando se ajuste la compatibilidad de versiones, se vuelve a implementar con:
+ * - Realm App Services (Email/Password)
+ * - `customData` para role/displayName
  */
-class AuthRepository {
+class AuthRepository : AuthRepositoryContract {
 
-    /**
-     * Simula una llamada de red para iniciar sesión.
-     *
-     * @param email El email o nombre de usuario.
-     * @param password La contraseña del usuario.
-     * @return Un [Result] que indica éxito o fallo.
-     */
-    suspend fun login(email: String, password: String): Result<Unit> {
-        // 1. Simula la latencia de una llamada de red.
-        delay(1500) // Simula un segundo y medio de espera.
+    // Colección requerida: usuarios temporales.
+    private val users: List<UserRecord> = listOf(
+        UserRecord("admin@shaddai.com", "1234", UserRole.Admin, "Admin"),
+        UserRecord("tecnico@shaddai.com", "1234", UserRole.Tecnico, "Técnico"),
+        UserRecord("cliente@shaddai.com", "1234", UserRole.Cliente, "Cliente")
+    )
 
-        // 2. Aquí es donde se implementaría la lógica de autenticación real.
-        //    - Se haría una llamada a una API (ej. con Ktor).
-        //    - Se validarían las credenciales contra una base de datos.
-        //    - Se manejarían los diferentes tipos de error (ej. usuario no encontrado, contraseña incorrecta).
+    override suspend fun login(email: String, password: String): Result<User> = withContext(Dispatchers.Default) {
+        try {
+            delay(400) // simula latencia
+            val normalizedEmail = email.trim().lowercase()
 
-        // 3. Por ahora, el login siempre tiene éxito, sin importar las credenciales.
-        println("AuthRepository: Simulación de login para '$email' completada con éxito.")
-        return Result.success(Unit)
+            // Higher-order: buscamos y mapeamos
+            val record = users.firstOrNull { it.email == normalizedEmail && it.password == password }
+
+            if (record == null) {
+                Result.failure(IllegalArgumentException("Credenciales inválidas"))
+            } else {
+                Result.success(
+                    User(
+                        id = normalizedEmail,
+                        email = normalizedEmail,
+                        displayName = record.displayName,
+                        role = record.role
+                    )
+                )
+            }
+        } catch (t: Throwable) {
+            Result.failure(t)
+        }
     }
+
+    override suspend fun logout(): Result<Unit> = Result.success(Unit)
+
+    private data class UserRecord(
+        val email: String,
+        val password: String,
+        val role: UserRole,
+        val displayName: String
+    )
 }

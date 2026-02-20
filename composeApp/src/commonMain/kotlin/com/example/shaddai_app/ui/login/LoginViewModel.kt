@@ -1,9 +1,9 @@
-
 package com.example.shaddai_app.ui.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.shaddai_app.domain.AuthRepository
+import com.example.shaddai_app.domain.AuthRepositoryContract
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,55 +12,92 @@ import kotlinx.coroutines.launch
 
 /**
  * ViewModel para la pantalla de Login.
- *
- * Se encarga de la lógica de negocio, la gestión del estado y la comunicación
- * con la capa de datos (AuthRepository).
  */
-class LoginViewModel(private val authRepository: AuthRepository = AuthRepository()) : ViewModel() {
+class LoginViewModel(
+    private val authRepository: AuthRepositoryContract = AuthRepository()
+) : ViewModel() {
 
-    // Flujo de estado privado y mutable que contiene el estado actual de la UI.
     private val _uiState = MutableStateFlow(LoginState())
-    // Flujo de estado público e inmutable, expuesto a la UI.
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
 
-    /**
-     * Función central para manejar todos los eventos de la UI.
-     */
     fun onEvent(event: LoginEvent) {
         when (event) {
-            is LoginEvent.OnEmailChange -> _uiState.update { it.copy(email = event.email) }
-            is LoginEvent.OnPasswordChange -> _uiState.update { it.copy(password = event.password) }
-            LoginEvent.TogglePasswordVisibility -> _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
-            LoginEvent.LoginClicked -> login()
-            LoginEvent.RegisterClicked -> {
-                // Lógica para navegar a la pantalla de registro
+            is LoginEvent.OnEmailChange -> _uiState.update {
+                it.copy(email = event.email, emailError = null, authErrorMessage = null)
             }
+
+            is LoginEvent.OnPasswordChange -> _uiState.update {
+                it.copy(password = event.password, passwordError = null, authErrorMessage = null)
+            }
+
+            LoginEvent.TogglePasswordVisibility -> _uiState.update {
+                it.copy(isPasswordVisible = !it.isPasswordVisible)
+            }
+
+            LoginEvent.LoginClicked -> login()
+
+            LoginEvent.RegisterClicked -> {
+                // Navegación a registro (pendiente)
+            }
+
             is LoginEvent.SocialLogin -> {
-                // Lógica para el inicio de sesión con redes sociales
+                // Social login (pendiente)
             }
         }
     }
 
     /**
-     * Realiza el proceso de inicio de sesión.
+     * Validación local rápida.
+     * @return true si todo está OK.
      */
+    private fun validateInputs(email: String, password: String): Boolean {
+        var ok = true
+        if (email.isBlank()) {
+            ok = false
+            _uiState.update { it.copy(emailError = "Campo requerido") }
+        }
+        if (password.isBlank()) {
+            ok = false
+            _uiState.update { it.copy(passwordError = "Campo requerido") }
+        }
+        return ok
+    }
+
     private fun login() {
+        val email = _uiState.value.email
+        val password = _uiState.value.password
+
+        // Resetea errores previos
+        _uiState.update { it.copy(emailError = null, passwordError = null, authErrorMessage = null) }
+
+        if (!validateInputs(email, password)) return
+
         viewModelScope.launch {
-            // Muestra el indicador de carga
             _uiState.update { it.copy(isLoading = true) }
 
-            // Llama al repositorio para autenticar al usuario.
-            val result = authRepository.login(_uiState.value.email, _uiState.value.password)
+            val result = authRepository.login(email, password)
 
-            // Procesa el resultado de la llamada al repositorio.
             result.fold(
-                onSuccess = {
-                    // En caso de éxito, actualiza el estado para indicar que el login fue correcto.
-                    _uiState.update { it.copy(isLoading = false, loginSuccess = true) }
+                onSuccess = { user ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            loggedInUser = user,
+                            authErrorMessage = null
+                        )
+                    }
                 },
                 onFailure = {
-                    // En caso de fallo, muestra un mensaje de error (actualmente es un placeholder).
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Credenciales inválidas") }
+                    // Error típico: credenciales inválidas
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            authErrorMessage = "Usuario o contraseña incorrectos",
+                            // opcional: marcar ambos campos en rojo en caso de auth fail
+                            emailError = it.emailError ?: "",
+                            passwordError = it.passwordError ?: ""
+                        )
+                    }
                 }
             )
         }

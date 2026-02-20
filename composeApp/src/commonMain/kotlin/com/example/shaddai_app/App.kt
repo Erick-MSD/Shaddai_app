@@ -1,7 +1,8 @@
 package com.example.shaddai_app
 
 import androidx.compose.runtime.*
-import androidx.compose.ui.tooling.preview.Preview
+import com.example.shaddai_app.data.model.User
+import com.example.shaddai_app.data.model.UserRole
 import com.example.shaddai_app.ui.login.LoginScreen
 import com.example.shaddai_app.ui.login.LoginViewModel
 import com.example.shaddai_app.ui.main.TechnicianAppScaffold
@@ -13,26 +14,41 @@ import com.example.shaddai_app.ui.theme.ShaddaiTheme
  * Gestiona la navegación principal basada en el estado de autenticación del usuario.
  */
 @Composable
-@Preview
 fun App() {
     ShaddaiTheme {
-        // Estado que controla si el usuario ha iniciado sesión.
-        var isLoggedIn by remember { mutableStateOf(false) }
+        // Estado que representa al usuario actual, null si no hay sesión.
+        var user: User? by remember { mutableStateOf(null) }
 
-        // Navegación manual basada en el estado `isLoggedIn`.
-        if (isLoggedIn) {
-            // Si el usuario está logueado, muestra la pantalla principal del técnico.
-            TechnicianAppScaffold()
-        } else {
-            // Si no, muestra la pantalla de login.
-            LoginScreen(
-                viewModel = LoginViewModel(),
-                // La lambda onLoginSuccess se encarga de cambiar el estado de la navegación.
-                onLoginSuccess = { isLoggedIn = true },
-                onNavigateToRegister = {
-                    // Aquí se implementaría la navegación a la pantalla de registro.
+        // Navegación basada en el estado `user`.
+        when (val currentUser = user) {
+            null -> {
+                // Si no hay usuario, muestra la pantalla de login.
+                LoginScreen(
+                    viewModel = remember { LoginViewModel() },
+                    // Al iniciar sesión con éxito, se establece el usuario.
+                    onLoginSuccess = { logged -> user = logged },
+                    onNavigateToRegister = {
+                        // Aquí se implementaría la navegación a la pantalla de registro.
+                    }
+                )
+            }
+
+            else -> {
+                // Si hay usuario, se muestra el scaffold correspondiente a su rol.
+                when (currentUser.role) {
+                    UserRole.Admin -> {
+                        // TODO: Crear scaffold Admin
+                        TechnicianAppScaffold()
+                    }
+
+                    UserRole.Tecnico -> TechnicianAppScaffold()
+
+                    UserRole.Cliente -> {
+                        // TODO: Crear scaffold Cliente
+                        TechnicianAppScaffold()
+                    }
                 }
-            )
+            }
         }
     }
 }
