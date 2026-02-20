@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.googleServices) apply false
+    alias(libs.plugins.realm.kotlin) apply false
+    alias(libs.plugins.buildkonfig) apply false
 }
 
 allprojects {

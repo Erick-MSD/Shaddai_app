@@ -1,6 +1,7 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
+import com.codingfeline.buildkonfig.compiler.FieldSpec
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -26,7 +27,7 @@ buildkonfig {
     exposeObjectWithName = "AppConfig"
     
     defaultConfigs {
-        buildConfigField("MONGODB_APP_ID", localProperties.getProperty("mongodb.app.id") ?: "")
+        buildConfigField(FieldSpec.Type.STRING, "MONGODB_APP_ID", localProperties.getProperty("mongodb.app.id") ?: "")
     }
 }
 
