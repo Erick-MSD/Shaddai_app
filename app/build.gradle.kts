@@ -42,10 +42,12 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.firebase.database.ktx)
+    implementation(libs.androidx.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("com.google.firebase:firebase-messaging-ktx:23.4.1")
+
     val room_version = "2.6.1" // Verifica la versión más reciente
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
@@ -61,6 +63,11 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-messaging-ktx:23.4.1")
     val work_version = "2.9.0"
     implementation("androidx.work:work-runtime-ktx:$work_version")
+
+    // Para usar Lifecycle con Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+    implementation("androidx.navigation:navigation-compose:2.8.0")
 }
