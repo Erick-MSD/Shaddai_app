@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.shaddai_app_android.ui.components.CalificacionDialog
+import com.example.shaddai_app_android.ui.components.EstrellasMostrar
 import com.example.shaddai_app_android.ui.components.ShaddaiBottomBar
 import com.example.shaddai_app_android.ui.theme.*
 import com.example.shaddai_app_android.viewmodel.CitaViewModel
@@ -37,6 +39,7 @@ fun DetalleCitaScreen(
 ) {
     val citas by citaViewModel.citas.collectAsState()
     val cita = citas.find { it.id == citaId }
+    var showCalificacionDialog by remember { mutableStateOf(false) }
 
     val estadoColor = when (cita?.estado) {
         "completado" -> SuccessGreen
@@ -356,8 +359,130 @@ fun DetalleCitaScreen(
                 }
             }
 
+            // === Calificación (solo si está completado) ===
+            if (cita.estado == "completado") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (cita.calificacion > 0)
+                            Color(0xFFFFF8E1) else SurfaceWhite
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (cita.calificacion > 0) {
+                            // Ya calificado — mostrar estrellas
+                            Text(
+                                text = "Tu calificación",
+                                fontFamily = ManropeFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = TextPrimary
+                            )
+                            EstrellasMostrar(
+                                calificacion = cita.calificacion,
+                                size = 32
+                            )
+                            Text(
+                                text = when (cita.calificacion) {
+                                    1 -> "Malo"
+                                    2 -> "Regular"
+                                    3 -> "Bueno"
+                                    4 -> "Muy bueno"
+                                    5 -> "Excelente"
+                                    else -> ""
+                                },
+                                fontFamily = ManropeFontFamily,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp,
+                                color = when (cita.calificacion) {
+                                    1 -> ErrorColor
+                                    2, 3 -> Color(0xFFD69E2E)
+                                    4, 5 -> SuccessGreen
+                                    else -> TextSecondary
+                                }
+                            )
+                            if (cita.comentarioCalificacion.isNotBlank()) {
+                                Text(
+                                    text = "\"${cita.comentarioCalificacion}\"",
+                                    fontFamily = ManropeFontFamily,
+                                    fontSize = 13.sp,
+                                    color = TextSecondary,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        } else {
+                            // No calificado — mostrar botón para calificar
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = Color(0xFFFFB300),
+                                modifier = Modifier.size(40.dp)
+                            )
+                            Text(
+                                text = "¿Cómo fue el servicio?",
+                                fontFamily = ManropeFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "Tu opinión nos ayuda a mejorar",
+                                fontFamily = ManropeFontFamily,
+                                fontSize = 13.sp,
+                                color = TextSecondary
+                            )
+                            Button(
+                                onClick = { showCalificacionDialog = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFFFB300)
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Calificar servicio",
+                                    fontFamily = ManropeFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
         }
+    }
+
+    // Diálogo de calificación
+    if (showCalificacionDialog && cita != null) {
+        CalificacionDialog(
+            technicianName = cita.tecnico_asignado,
+            onCalificar = { estrellas, comentario ->
+                citaViewModel.calificarCita(cita.id, estrellas, comentario)
+                showCalificacionDialog = false
+            },
+            onDismiss = { showCalificacionDialog = false }
+        )
     }
 }
 

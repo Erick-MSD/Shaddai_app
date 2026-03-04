@@ -162,6 +162,60 @@ fun CitaCard(
                     )
                 }
             }
+
+            // Indicador de calificación (solo si está completada)
+            if (isCompleted) {
+                HorizontalDivider(color = BorderColor.copy(alpha = 0.5f))
+                if (cita.calificacion > 0) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        (1..5).forEach { i ->
+                            Icon(
+                                imageVector = if (i <= cita.calificacion) Icons.Default.Star else Icons.Default.StarBorder,
+                                contentDescription = null,
+                                tint = if (i <= cita.calificacion) Color(0xFFFFB300) else Color(0xFFE0E0E0),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = when (cita.calificacion) {
+                                1 -> "Malo"
+                                2 -> "Regular"
+                                3 -> "Bueno"
+                                4 -> "Muy bueno"
+                                5 -> "Excelente"
+                                else -> ""
+                            },
+                            fontFamily = ManropeFontFamily,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextSecondary
+                        )
+                    }
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFB300),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Toca para calificar",
+                            fontFamily = ManropeFontFamily,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFFFFB300)
+                        )
+                    }
+                }
+            }
         }
     }
 }

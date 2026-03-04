@@ -2,26 +2,36 @@ package com.example.shaddai_app_android.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
 import com.example.shaddai_app_android.model.CitaData
 import com.example.shaddai_app_android.ui.components.ShaddaiBottomBar
 import com.example.shaddai_app_android.ui.components.ShaddaiTopBar
 import com.example.shaddai_app_android.ui.components.StepProgressBar
 import com.example.shaddai_app_android.ui.theme.*
+import java.util.Locale
 
 @Composable
 fun DireccionScreen(
@@ -36,6 +46,10 @@ fun DireccionScreen(
     var codigoPostal by remember { mutableStateOf(citaData.codigoPostal) }
     var referencias by remember { mutableStateOf(citaData.referencias) }
     var intentoContinuar by remember { mutableStateOf(false) }
+    var isLoadingLocation by remember { mutableStateOf(false) }
+    var locationError by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
 
     val calleError = intentoContinuar && calle.isBlank()
     val numError = intentoContinuar && numeroExterior.isBlank()
@@ -112,13 +126,14 @@ fun DireccionScreen(
                                 FieldLabel("NÚMERO", numError)
                                 OutlinedTextField(
                                     value = numeroExterior,
-                                    onValueChange = { numeroExterior = it },
+                                    onValueChange = { if (it.all { c -> c.isDigit() }) numeroExterior = it },
                                     modifier = Modifier.fillMaxWidth(),
                                     placeholder = { HintText("222") },
                                     isError = numError,
                                     singleLine = true,
                                     shape = RoundedCornerShape(10.dp),
-                                    colors = fieldColors(numError)
+                                    colors = fieldColors(numError),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
                                 if (numError) ErrorText("Requerido")
                             }
@@ -148,14 +163,15 @@ fun DireccionScreen(
                                 OutlinedTextField(
                                     value = codigoPostal,
                                     onValueChange = {
-                                        if (it.length <= 5) codigoPostal = it
+                                        if (it.all { c -> c.isDigit() } && it.length <= 5) codigoPostal = it
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     placeholder = { HintText("00000") },
                                     isError = cpError,
                                     singleLine = true,
                                     shape = RoundedCornerShape(10.dp),
-                                    colors = fieldColors(cpError)
+                                    colors = fieldColors(cpError),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
                                 if (cpError) ErrorText("Requerido")
                             }
@@ -178,21 +194,82 @@ fun DireccionScreen(
                         // Usar ubicación actual
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(top = 2.dp)
+                            modifier = Modifier
+                                .padding(top = 2.dp)
+                                .clickable {
+                                    if (isLoadingLocation) return@clickable
+                                    val fineGranted = ContextCompat.checkSelfPermission(
+                                        context, Manifest.permission.ACCESS_FINE_LOCATION
+                                    ) == PackageManager.PERMISSION_GRANTED
+                                    val coarseGranted = ContextCompat.checkSelfPermission(
+                                        context, Manifest.permission.ACCESS_COARSE_LOCATION
+                                    ) == PackageManager.PERMISSION_GRANTED
+
+                                    if (!fineGranted && !coarseGranted) {
+                                        locationError = "Permiso de ubicación no concedido. Actívalo en Ajustes."
+                                        return@clickable
+                                    }
+
+                                    isLoadingLocation = true
+                                    locationError = null
+                                    val fusedClient = LocationServices.getFusedLocationProviderClient(context)
+                                    fusedClient.lastLocation.addOnSuccessListener { location ->
+                                        if (location != null) {
+                                            try {
+                                                val geocoder = Geocoder(context, Locale("es", "MX"))
+                                                @Suppress("DEPRECATION")
+                                                val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                                                if (!addresses.isNullOrEmpty()) {
+                                                    val addr = addresses[0]
+                                                    calle = addr.thoroughfare ?: ""
+                                                    numeroExterior = addr.subThoroughfare ?: ""
+                                                    colonia = addr.subLocality ?: addr.locality ?: ""
+                                                    codigoPostal = addr.postalCode ?: ""
+                                                }
+                                            } catch (e: Exception) {
+                                                locationError = "Error al obtener la dirección"
+                                            }
+                                        } else {
+                                            locationError = "No se pudo obtener la ubicación. Intenta de nuevo."
+                                        }
+                                        isLoadingLocation = false
+                                    }.addOnFailureListener {
+                                        locationError = "Error al obtener la ubicación: ${it.message}"
+                                        isLoadingLocation = false
+                                    }
+                                }
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null,
-                                tint = PrimaryBlueLight,
-                                modifier = Modifier.size(18.dp)
-                            )
+                            if (isLoadingLocation) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    color = PrimaryBlueLight,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.MyLocation,
+                                    contentDescription = null,
+                                    tint = PrimaryBlueLight,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "Usar mi ubicación actual",
+                                text = if (isLoadingLocation) "Obteniendo ubicación..." else "Usar mi ubicación actual",
                                 fontFamily = ManropeFontFamily,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = PrimaryBlueLight
+                            )
+                        }
+
+                        if (locationError != null) {
+                            Text(
+                                text = locationError!!,
+                                fontFamily = ManropeFontFamily,
+                                fontSize = 11.sp,
+                                color = ErrorColor,
+                                modifier = Modifier.padding(top = 4.dp)
                             )
                         }
                     }

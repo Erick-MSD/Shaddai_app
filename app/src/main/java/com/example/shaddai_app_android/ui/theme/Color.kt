@@ -21,3 +21,11 @@ val CheckboxChecked = Color(0xFF2B6CB0)
 val SelectedDayBackground = Color(0xFF2B6CB0)
 val UnselectedDayText = Color(0xFF4A5568)
 
+/**
+ * Objeto de colores para uso en pantallas de técnico (service_report, etc.)
+ */
+object ShaddaiColors {
+    val White = Color.White
+    val AccentBlue = Color(0xFF63B3ED)
+}
+

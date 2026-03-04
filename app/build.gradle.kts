@@ -76,4 +76,5 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
 }

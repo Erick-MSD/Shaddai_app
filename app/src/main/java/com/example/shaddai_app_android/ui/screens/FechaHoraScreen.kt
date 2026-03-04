@@ -30,6 +30,7 @@ import com.example.shaddai_app_android.ui.components.StepProgressBar
 import com.example.shaddai_app_android.ui.theme.*
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -56,15 +57,34 @@ fun FechaHoraScreen(
         else null
     ) }
 
-    val horasDisponibles = remember {
-        (9..17).map { hora ->
-            "%02d:00".format(hora)
-        } + listOf("18:00")
+    val todasLasHoras = remember {
+        (9..18).map { hora -> "%02d:00".format(hora) }
+    }
+
+    // Filtrar horas: si el día seleccionado es hoy, solo mostrar horas con al menos 2h de anticipación
+    val horasDisponibles = remember(diaSeleccionado) {
+        if (diaSeleccionado == LocalDate.now()) {
+            val ahora = LocalTime.now()
+            val minimoHora = ahora.plusHours(2)
+            todasLasHoras.filter { horaStr ->
+                val hora = LocalTime.parse(horaStr)
+                hora.isAfter(minimoHora)
+            }
+        } else {
+            todasLasHoras
+        }
     }
 
     var horaSeleccionada by remember { mutableStateOf(
         if (citaData.hora.isNotBlank()) citaData.hora else ""
     ) }
+
+    // Si la hora seleccionada ya no está disponible (ej. cambiaste de día), limpiarla
+    LaunchedEffect(horasDisponibles) {
+        if (horaSeleccionada.isNotBlank() && horaSeleccionada !in horasDisponibles) {
+            horaSeleccionada = ""
+        }
+    }
 
     var intentoContinuar by remember { mutableStateOf(false) }
     val diaError = intentoContinuar && diaSeleccionado == null
@@ -293,8 +313,49 @@ fun FechaHoraScreen(
                         }
 
                         // Grid de horas 3 columnas
-                        val columnas = 3
-                        horasDisponibles.chunked(columnas).forEach { fila ->
+                        if (horasDisponibles.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = if (diaSeleccionado == null)
+                                            "Selecciona un día para ver horarios"
+                                        else
+                                            "No hay horarios disponibles para hoy",
+                                        fontFamily = ManropeFontFamily,
+                                        fontSize = 13.sp,
+                                        color = TextSecondary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    if (diaSeleccionado == LocalDate.now()) {
+                                        Text(
+                                            text = "Se requieren al menos 2 horas de anticipación.\nPrueba seleccionando otro día.",
+                                            fontFamily = ManropeFontFamily,
+                                            fontSize = 12.sp,
+                                            color = TextHint,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            if (diaSeleccionado == LocalDate.now()) {
+                                Text(
+                                    text = "⏰ Se requieren mínimo 2 horas de anticipación",
+                                    fontFamily = ManropeFontFamily,
+                                    fontSize = 11.sp,
+                                    color = TextHint,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                            }
+
+                            val columnas = 3
+                            horasDisponibles.chunked(columnas).forEach { fila ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -330,6 +391,7 @@ fun FechaHoraScreen(
                                 }
                             }
                         }
+                        } // end else (horasDisponibles not empty)
                     }
                 }
 

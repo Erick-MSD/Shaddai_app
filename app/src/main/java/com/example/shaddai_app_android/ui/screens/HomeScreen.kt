@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Air
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -341,14 +342,16 @@ fun HistoryItem(cita: CitaClima, onClick: () -> Unit) {
                 modifier = Modifier.size(36.dp)
             )
             Spacer(modifier = Modifier.width(14.dp))
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${cita.servicio} ${cita.equipo}",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1A1A2E),
                     fontFamily = ManropeFontFamily,
-                    modifier = Modifier.padding(bottom = 2.dp)
+                    modifier = Modifier.padding(bottom = 2.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = "${cita.fecha}  •  Completado",
@@ -357,6 +360,43 @@ fun HistoryItem(cita: CitaClima, onClick: () -> Unit) {
                     fontWeight = FontWeight.Normal,
                     fontFamily = ManropeFontFamily
                 )
+                if (cita.calificacion > 0) {
+                    // Mostrar estrellas pequeñas
+                    Row(
+                        modifier = Modifier.padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(1.dp)
+                    ) {
+                        (1..5).forEach { i ->
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = if (i <= cita.calificacion) Color(0xFFFFB300) else Color(0xFFE0E0E0),
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                } else {
+                    // Indicador de pendiente de calificar
+                    Row(
+                        modifier = Modifier.padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFB300),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Calificar",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFFFFB300),
+                            fontFamily = ManropeFontFamily
+                        )
+                    }
+                }
             }
         }
     }

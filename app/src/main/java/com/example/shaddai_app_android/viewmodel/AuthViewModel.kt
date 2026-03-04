@@ -30,6 +30,12 @@ class AuthViewModel : ViewModel() {
     private val _profileUpdateSuccess = MutableStateFlow(false)
     val profileUpdateSuccess: StateFlow<Boolean> = _profileUpdateSuccess
 
+    private val _resetPasswordSuccess = MutableStateFlow(false)
+    val resetPasswordSuccess: StateFlow<Boolean> = _resetPasswordSuccess
+
+    private val _resetPasswordError = MutableStateFlow<String?>(null)
+    val resetPasswordError: StateFlow<String?> = _resetPasswordError
+
     init {
         if (auth.currentUser != null) {
             fetchUserName()
@@ -174,13 +180,36 @@ class AuthViewModel : ViewModel() {
     private fun loginWithEmail(email: String, pass: String, onSuccess: () -> Unit) {
         auth.signInWithEmailAndPassword(email, pass)
             .addOnCompleteListener { task ->
-                _isLoading.value = false
                 if (task.isSuccessful) {
-                    _isLoggedIn.value = true
-                    fetchUserName()
-                    fetchUserProfile()
-                    onSuccess()
+                    val uid = auth.currentUser?.uid
+                    if (uid == null) {
+                        _isLoading.value = false
+                        _errorMessage.value = "Error al obtener la cuenta"
+                        return@addOnCompleteListener
+                    }
+                    // Verificar que NO sea una cuenta de técnico
+                    db.collection("technicians").document(uid).get()
+                        .addOnSuccessListener { doc ->
+                            _isLoading.value = false
+                            if (doc.exists()) {
+                                // Es técnico → no permitir login como cliente
+                                auth.signOut()
+                                _errorMessage.value = "Esta cuenta es de técnico. Usa el acceso de técnico para iniciar sesión."
+                            } else {
+                                // Es cliente → continuar
+                                _isLoggedIn.value = true
+                                fetchUserName()
+                                fetchUserProfile()
+                                onSuccess()
+                            }
+                        }
+                        .addOnFailureListener {
+                            _isLoading.value = false
+                            _errorMessage.value = "Error al verificar la cuenta: ${it.message}"
+                            auth.signOut()
+                        }
                 } else {
+                    _isLoading.value = false
                     _errorMessage.value = task.exception?.message ?: "Error al iniciar sesión"
                 }
             }
@@ -217,6 +246,63 @@ class AuthViewModel : ViewModel() {
                     _errorMessage.value = "Error al guardar el perfil: ${task.exception?.message}"
                 }
             }
+    }
+
+    fun sendPasswordReset(emailOrName: String) {
+        if (emailOrName.isBlank()) {
+            _resetPasswordError.value = "Ingresa tu email o nombre"
+            return
+        }
+
+        _resetPasswordSuccess.value = false
+        _resetPasswordError.value = null
+
+        val isEmail = emailOrName.contains("@")
+
+        if (isEmail) {
+            sendResetEmail(emailOrName)
+        } else {
+            db.collection("users")
+                .whereEqualTo("name", emailOrName)
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    if (!querySnapshot.isEmpty) {
+                        val email = querySnapshot.documents[0].getString("email")
+                        if (!email.isNullOrBlank()) {
+                            sendResetEmail(email)
+                        } else {
+                            _resetPasswordError.value = "No se encontró un correo asociado a ese nombre"
+                        }
+                    } else {
+                        _resetPasswordError.value = "No se encontró un usuario con ese nombre"
+                    }
+                }
+                .addOnFailureListener {
+                    _resetPasswordError.value = "Error al buscar usuario: ${it.message}"
+                }
+        }
+    }
+
+    private fun sendResetEmail(email: String) {
+        auth.sendPasswordResetEmail(email)
+            .addOnSuccessListener {
+                _resetPasswordSuccess.value = true
+                _resetPasswordError.value = null
+            }
+            .addOnFailureListener { e ->
+                _resetPasswordError.value = when {
+                    e.message?.contains("no user record", ignoreCase = true) == true ->
+                        "No existe una cuenta con ese correo"
+                    e.message?.contains("badly formatted", ignoreCase = true) == true ->
+                        "El formato del correo no es válido"
+                    else -> "Error al enviar correo: ${e.message}"
+                }
+            }
+    }
+
+    fun clearResetPasswordState() {
+        _resetPasswordSuccess.value = false
+        _resetPasswordError.value = null
     }
 
     fun clearError() {

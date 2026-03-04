@@ -121,7 +121,7 @@ fun DescripcionScreen(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "(selecciona los que apliquen)",
+                            text = "(máximo 3)",
                             fontFamily = ManropeFontFamily,
                             fontSize = 12.sp,
                             color = TextHint
@@ -164,7 +164,8 @@ fun DescripcionScreen(
                                                     tiposSeleccionados = tiposSeleccionados
                                                         .toMutableSet()
                                                         .apply {
-                                                            if (isSelected) remove(tipo) else add(tipo)
+                                                            if (isSelected) remove(tipo)
+                                                            else if (size < 3) add(tipo)
                                                         }
                                                 }
                                                 .padding(vertical = 2.dp),
@@ -176,7 +177,8 @@ fun DescripcionScreen(
                                                     tiposSeleccionados = tiposSeleccionados
                                                         .toMutableSet()
                                                         .apply {
-                                                            if (checked) add(tipo) else remove(tipo)
+                                                            if (checked && size < 3) add(tipo)
+                                                            else if (!checked) remove(tipo)
                                                         }
                                                 },
                                                 colors = CheckboxDefaults.colors(

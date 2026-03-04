@@ -9,6 +9,7 @@ data class CitaClima(
     val equipo: String = "",
     val estado: String = "",
     val tecnico_asignado: String = "",
+    val tecnico_uid: String = "",
     val notas: String = "",
     val id: String = "",
     val uid: String = "",
@@ -19,5 +20,7 @@ data class CitaClima(
     val codigoPostal: String = "",
     val referencias: String = "",
     val tiposServicio: List<String> = emptyList(),
-    val fechaCreacion: Long = 0L
+    val fechaCreacion: Long = 0L,
+    val calificacion: Int = 0,
+    val comentarioCalificacion: String = ""
 )
