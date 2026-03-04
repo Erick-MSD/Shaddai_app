@@ -26,7 +26,8 @@ import com.example.shaddai_app_android.ui.theme.*
 @Composable
 fun DescripcionScreen(
     citaData: CitaData,
-    onContinuar: (CitaData) -> Unit
+    onContinuar: (CitaData) -> Unit,
+    onNavigate: (String) -> Unit = {}
 ) {
     var descripcion by remember { mutableStateOf(citaData.descripcion) }
     var tiposSeleccionados by remember { mutableStateOf(citaData.tiposServicio.toMutableSet()) }
@@ -36,8 +37,8 @@ fun DescripcionScreen(
     val tiposError = intentoContinuar && tiposSeleccionados.isEmpty()
 
     Scaffold(
-        topBar = { ShaddaiTopBar() },
-        bottomBar = { ShaddaiBottomBar() },
+        topBar = { ShaddaiTopBar(onNavigate = onNavigate) },
+        bottomBar = { ShaddaiBottomBar(currentRoute = "nueva_cita", onNavigate = onNavigate) },
         containerColor = BackgroundColor
     ) { paddingValues ->
         Column(

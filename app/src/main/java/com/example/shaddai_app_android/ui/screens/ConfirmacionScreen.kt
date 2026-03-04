@@ -30,6 +30,7 @@ import com.example.shaddai_app_android.ui.components.ShaddaiBottomBar
 import com.example.shaddai_app_android.ui.components.ShaddaiTopBar
 import com.example.shaddai_app_android.ui.components.StepProgressBar
 import com.example.shaddai_app_android.ui.theme.*
+import com.example.shaddai_app_android.viewmodel.CitaViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -37,7 +38,9 @@ import java.util.Locale
 @Composable
 fun ConfirmacionScreen(
     citaData: CitaData,
-    onVolverAlInicio: () -> Unit
+    citaViewModel: CitaViewModel,
+    onVolverAlInicio: () -> Unit,
+    onNavigate: (String) -> Unit = {}
 ) {
     val fechaFormateada = try {
         val ld = LocalDate.parse(citaData.fecha)
@@ -48,8 +51,8 @@ fun ConfirmacionScreen(
     }
 
     Scaffold(
-        topBar = { ShaddaiTopBar() },
-        bottomBar = { ShaddaiBottomBar() },
+        topBar = { ShaddaiTopBar(title = "Confirmación", onNavigate = onNavigate) },
+        bottomBar = { ShaddaiBottomBar(currentRoute = "nueva_cita", onNavigate = onNavigate) },
         containerColor = BackgroundColor
     ) { paddingValues ->
         Column(
@@ -170,9 +173,13 @@ fun ConfirmacionScreen(
                     }
                 }
 
-                // Botón volver al inicio
+                // Botón confirmar y guardar
                 Button(
-                    onClick = onVolverAlInicio,
+                    onClick = {
+                        citaViewModel.guardarCita(citaData) {
+                            onVolverAlInicio()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -180,7 +187,7 @@ fun ConfirmacionScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
                 ) {
                     Text(
-                        text = "Volver al inicio",
+                        text = "Confirmar Cita",
                         fontFamily = ManropeFontFamily,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 16.sp,

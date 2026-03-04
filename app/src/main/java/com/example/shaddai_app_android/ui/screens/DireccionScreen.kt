@@ -27,7 +27,8 @@ import com.example.shaddai_app_android.ui.theme.*
 fun DireccionScreen(
     citaData: CitaData,
     onAtras: () -> Unit,
-    onContinuar: (CitaData) -> Unit
+    onContinuar: (CitaData) -> Unit,
+    onNavigate: (String) -> Unit = {}
 ) {
     var calle by remember { mutableStateOf(citaData.calle) }
     var numeroExterior by remember { mutableStateOf(citaData.numeroExterior) }
@@ -42,8 +43,8 @@ fun DireccionScreen(
     val cpError = intentoContinuar && codigoPostal.isBlank()
 
     Scaffold(
-        topBar = { ShaddaiTopBar() },
-        bottomBar = { ShaddaiBottomBar() },
+        topBar = { ShaddaiTopBar(onNavigate = onNavigate) },
+        bottomBar = { ShaddaiBottomBar(currentRoute = "nueva_cita", onNavigate = onNavigate) },
         containerColor = BackgroundColor
     ) { paddingValues ->
         Column(

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "517912260985",
+    "firebase_url": "https://shaddai-app-f-default-rtdb.firebaseio.com",
+    "project_id": "shaddai-app-f",
+    "storage_bucket": "shaddai-app-f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:517912260985:android:820ccf5b337dea4681bfa8",
+        "android_client_info": {
+          "package_name": "com.example.shaddai_app_android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6KYFx7en8B1StpjzHA1bc7LnU3e6QlBI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

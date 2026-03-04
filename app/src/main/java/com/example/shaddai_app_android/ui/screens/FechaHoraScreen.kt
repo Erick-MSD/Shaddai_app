@@ -37,7 +37,8 @@ import java.util.Locale
 fun FechaHoraScreen(
     citaData: CitaData,
     onAtras: () -> Unit,
-    onContinuar: (CitaData) -> Unit
+    onContinuar: (CitaData) -> Unit,
+    onNavigate: (String) -> Unit = {}
 ) {
     val hoy = remember { LocalDate.now() }
     val maxFecha = remember { hoy.plusDays(7) }
@@ -74,8 +75,8 @@ fun FechaHoraScreen(
         ?: hoy.format(formatoMesAno).replaceFirstChar { it.uppercase() }
 
     Scaffold(
-        topBar = { ShaddaiTopBar() },
-        bottomBar = { ShaddaiBottomBar() },
+        topBar = { ShaddaiTopBar(onNavigate = onNavigate) },
+        bottomBar = { ShaddaiBottomBar(currentRoute = "nueva_cita", onNavigate = onNavigate) },
         containerColor = BackgroundColor
     ) { paddingValues ->
         Column(
