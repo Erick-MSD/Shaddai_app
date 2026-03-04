@@ -3,7 +3,6 @@ package com.example.shaddai_app_android.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -147,21 +146,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Social Login
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SocialIconPlaceholder(color = Color(0xFF1877F2), text = "f")
-            Spacer(modifier = Modifier.width(16.dp))
-            SocialIconPlaceholder(color = Color.White, text = "G", textColor = Color.Black, border = true)
-            Spacer(modifier = Modifier.width(16.dp))
-            SocialIconPlaceholder(color = Color.Black, text = "")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         Text(
             text = "Regístrate aquí",
             fontSize = 16.sp,
@@ -172,41 +156,5 @@ fun LoginScreen(
                 .padding(8.dp),
             fontFamily = ManropeFontFamily
         )
-    }
-}
-
-@Composable
-fun SocialIconPlaceholder(
-    color: Color,
-    text: String,
-    textColor: Color = Color.White,
-    border: Boolean = false
-) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CircleShape)
-            .background(color)
-            .then(
-                if (border) Modifier.background(Color.White).padding(1.dp).clip(CircleShape).background(Color.White)
-                else Modifier
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        if (border) {
-             Text(
-                text = text,
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
-            )
-        } else {
-            Text(
-                text = text,
-                color = textColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
-            )
-        }
     }
 }
